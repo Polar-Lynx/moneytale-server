@@ -1,0 +1,37 @@
+﻿services:
+  moneytale-server:
+    build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+            BUILD_CONFIGURATION: Release
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - moneytale-network
+
+  postgres:
+    image: postgres:17.2-bookworm
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5432:5432"
+    networks:
+      - moneytale-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+networks:
+  moneytale-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
