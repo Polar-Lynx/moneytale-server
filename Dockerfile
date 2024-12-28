@@ -1,10 +1,3 @@
-# defines the APP_UID
-ARG APP_UID=1000
-
-# defines a build argument with the default value of Release
-ARG BUILD_CONFIGURATION=Release
-
-
 ########################
 #      BASE STAGE      #
 ########################
@@ -12,16 +5,10 @@ ARG BUILD_CONFIGURATION=Release
 # uses the ASP.NET runtime image for .NET 9.0,
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 
-# creates a non-root user with the specified UID
-RUN useradd -u $APP_UID appuser
-
-# sets the user for the container
-USER appuser
-
 # sets the working directory for the application inside the container
 WORKDIR /app
 
-# exposes ports 8080 and 8081 for external communication
+# exposes ports 8080 & 8081 for external communication
 EXPOSE 8080
 EXPOSE 8081
 
@@ -32,6 +19,9 @@ EXPOSE 8081
 
 # uses the SDK image for .NET 9.0
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+
+# defines a build argument with the default value of Release
+ARG BUILD_CONFIGURATION=Release
 
 # sets the working directory where the source code will be placed in the container
 WORKDIR /src
@@ -58,6 +48,9 @@ RUN dotnet build "./moneytale-server.csproj" -c $BUILD_CONFIGURATION -o /app/bui
 
 # uses the previous build stage
 FROM build AS publish
+
+# defines a build argument with the default value of Release
+ARG BUILD_CONFIGURATION=Release
 
 # compiles the app and prepares it for deployment (and prevents the creation of a platform-specific executable file)
 RUN dotnet publish "./moneytale-server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
