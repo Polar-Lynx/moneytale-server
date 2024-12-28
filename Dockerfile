@@ -1,30 +1,80 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# defines the APP_UID
+ARG APP_UID=1000
 
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
+# defines a build argument with the default value of Release
+ARG BUILD_CONFIGURATION=Release
+
+
+########################
+#      BASE STAGE      #
+########################
+
+# uses the ASP.NET runtime image for .NET 9.0,
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-USER $APP_UID
+
+# creates a non-root user with the specified UID
+RUN useradd -u $APP_UID appuser
+
+# sets the user for the container
+USER appuser
+
+# sets the working directory for the application inside the container
 WORKDIR /app
+
+# exposes ports 8080 and 8081 for external communication
 EXPOSE 8080
 EXPOSE 8081
 
 
-# This stage is used to build the service project
+########################
+#      BUILD STAGE     #
+########################
+
+# uses the SDK image for .NET 9.0
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-ARG BUILD_CONFIGURATION=Release
+
+# sets the working directory where the source code will be placed in the container
 WORKDIR /src
+
+# copies the moneytale-server.csproj file into /src
 COPY ["moneytale-server.csproj", "."]
+
+# restores the NuGet packages required for the project
 RUN dotnet restore "./moneytale-server.csproj"
+
+# copies the rest of the application code into the container
 COPY . .
+
+# sets the working directory to where the project will be built
 WORKDIR "/src/."
+
+# builds the project with the specified configuration and outputs the build artifacts to /app/build
 RUN dotnet build "./moneytale-server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+
+########################
+#      PUBLISH STAGE   #
+########################
+
+# uses the previous build stage
 FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
+
+# compiles the app and prepares it for deployment (and prevents the creation of a platform-specific executable file)
 RUN dotnet publish "./moneytale-server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+
+########################
+#      FINAL STAGE     #
+########################
+
+# uses the base stage
 FROM base AS final
+
+# stes where the published application files will be copied
 WORKDIR /app
+
+# copies the published files from the publish stage
 COPY --from=publish /app/publish .
+
+# sets the entry point for the container
 ENTRYPOINT ["dotnet", "moneytale-server.dll"]
