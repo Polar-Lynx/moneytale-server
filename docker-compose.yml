@@ -5,17 +5,24 @@
         dockerfile: Dockerfile
         args:
             BUILD_CONFIGURATION: Release
+    container_name: moneytale-server
     restart: unless-stopped
     ports:
       - "8080:8080"
       - "8081:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+      - DB_SERVER=${DB_SERVER}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
     networks:
       - moneytale-network
 
   postgres:
     image: postgres:17.2-bookworm
+    container_name: postgres
     restart: unless-stopped
     environment:
       - POSTGRES_USER=${DB_USER}
@@ -28,6 +35,22 @@
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+  pgadmin:
+    image: dpage/pgadmin4:8.14.0
+    container_name: pgadmin4
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - moneytale-network
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
 networks:
   moneytale-network:
     driver: bridge
@@ -35,3 +58,4 @@ networks:
 volumes:
   postgres-data:
     driver: local
+  pgadmin_data:
