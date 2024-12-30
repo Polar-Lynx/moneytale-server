@@ -15,22 +15,12 @@ using moneytale_server;
 // initializes the application builder
 var builder = WebApplication.CreateBuilder(args);
 
-// gets the necessary environment variables
-string allowedOrigin = Environment.GetEnvironmentVariable("ALLOWED_ORIGIN");
-string connectionServer = Environment.GetEnvironmentVariable("DB_SERVER");
-string connectionDatabase = Environment.GetEnvironmentVariable("DB_NAME");
-string connectionUserId = Environment.GetEnvironmentVariable("DB_USER");
-string connectionPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
-
-// ensures variables are not empty
-if (string.IsNullOrWhiteSpace(allowedOrigin) ||
-    string.IsNullOrWhiteSpace(connectionServer) ||
-    string.IsNullOrWhiteSpace(connectionDatabase) ||
-    string.IsNullOrWhiteSpace(connectionUserId) ||
-    string.IsNullOrWhiteSpace(connectionPassword))
-{
-    throw new InvalidOperationException("Invalid Environment Variable(s).");
-}
+// gets and validates the necessary environment variables
+string allowedOrigin = GetRequiredEnvironmentVariable("ALLOWED_ORIGIN");
+string connectionServer = GetRequiredEnvironmentVariable("DB_SERVER");
+string connectionDatabase = GetRequiredEnvironmentVariable("DB_NAME");
+string connectionUserId = GetRequiredEnvironmentVariable("DB_USER");
+string connectionPassword = GetRequiredEnvironmentVariable("DB_PASSWORD");
 
 
 /************************ SERVICES *************************************************/
@@ -110,6 +100,28 @@ catch (Exception ex)
 {
     Console.WriteLine($"Application failed to start: {ex.Message}");
     throw;
+}
+
+
+/************************ METHODS **************************************************/
+/// <summary>
+/// This method allows the configuration of the data entities.
+/// </summary>
+/// <param name="modelBuilder">The data model constructor.</param>
+/// <returns>Nothing.</returns>
+static string GetRequiredEnvironmentVariable(string key)
+{
+    // loads the environment variable
+    string? value = Environment.GetEnvironmentVariable(key);
+
+    // checks if environment variable is valid
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        // handles invalid environment variable
+        throw new InvalidOperationException($"{key} is not set or is empty.");
+    }
+
+    return value;
 }
 
 
