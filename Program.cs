@@ -6,19 +6,65 @@
 ************************************************************************************/
 
 
+/************************ IMPORTS **************************************************/
+using Microsoft.EntityFrameworkCore;
+using moneytale_server;
+
+
 /************************ INITIALIZATION *******************************************/
-//  initializes the application builder
+// initializes the application builder
 var builder = WebApplication.CreateBuilder(args);
+
+// gets the necessary environment variables
+string allowedOrigin = Environment.GetEnvironmentVariable("ALLOWED_ORIGIN");
+string connectionServer = Environment.GetEnvironmentVariable("DB_SERVER");
+string connectionDatabase = Environment.GetEnvironmentVariable("DB_NAME");
+string connectionUserId = Environment.GetEnvironmentVariable("DB_USER");
+string connectionPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+
+// ensures variables are not empty
+if (string.IsNullOrWhiteSpace(allowedOrigin) ||
+    string.IsNullOrWhiteSpace(connectionServer) ||
+    string.IsNullOrWhiteSpace(connectionDatabase) ||
+    string.IsNullOrWhiteSpace(connectionUserId) ||
+    string.IsNullOrWhiteSpace(connectionPassword))
+{
+    throw new InvalidOperationException("Invalid Environment Variable(s).");
+}
 
 
 /************************ SERVICES *************************************************/
+// registers the CORS services
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("WebClientPolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigin)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // adds OpenAPI (Swagger) services to the dependency injection container
 builder.Services.AddOpenApi();
+
+// adds Entity Framework Core with PostgreSQL
+builder.Services.AddDbContext<ServerDbContext>(options =>
+    options.UseNpgsql($"Host={connectionServer};Database={connectionDatabase};Username={connectionUserId};Password={connectionPassword}"));
 
 
 /************************ MIDDLEWARE ***********************************************/
 // builds the application pipeline using the configured builder
 var app = builder.Build();
+
+// applies CORS globally
+app.UseCors("WebClientPolicy");
+
+// sets up HTTP request routing
+app.UseRouting();
+
+// redirects all HTTP requests to HTTPS for security
+app.UseHttpsRedirection();
 
 // configures the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -26,9 +72,6 @@ if (app.Environment.IsDevelopment())
     // maps the OpenAPI(Swagger) UI to a default endpoint
     app.MapOpenApi();
 }
-
-// redirects all HTTP requests to HTTPS for security
-app.UseHttpsRedirection();
 
 
 /************************ REQUESTS *************************************************/
@@ -56,8 +99,18 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
+
+/************************ MAIN ****************************************************/
 // starts the application and listens for incoming HTTP requests
-await app.RunAsync();
+try
+{
+    await app.RunAsync();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Application failed to start: {ex.Message}");
+    throw;
+}
 
 
 // defines a record for representing weather forecasts
