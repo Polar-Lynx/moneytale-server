@@ -1,5 +1,6 @@
 # moneytale-server
 Wealth tracking service's server
 
-#moneytale-webclient
+
+# moneytale-web-client
 https://github.com/Polar-Lynx/moneytale-web-client
