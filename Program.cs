@@ -91,9 +91,14 @@ app.MapGet("/weatherforecast", () =>
 
 
 /************************ MAIN ****************************************************/
-// starts the application and listens for incoming HTTP requests
 try
 {
+    // asynchronously creates tables if needed
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ServerDbContext>();
+    await dbContext.Database.EnsureCreatedAsync();
+
+    // starts the application and listens for incoming HTTP requests
     await app.RunAsync();
 }
 catch (Exception ex)
@@ -105,10 +110,11 @@ catch (Exception ex)
 
 /************************ METHODS **************************************************/
 /// <summary>
-/// This method allows the configuration of the data entities.
+/// Retrieves an environment variable or throws an exception if it is missing or empty.
 /// </summary>
-/// <param name="modelBuilder">The data model constructor.</param>
-/// <returns>Nothing.</returns>
+/// <param name="key">The environment variable key.</param>
+/// <returns>The value of the environment variable.</returns>
+/// <exception cref="InvalidOperationException">Thrown if the variable is not set or empty.</exception>
 static string GetRequiredEnvironmentVariable(string key)
 {
     // loads the environment variable
