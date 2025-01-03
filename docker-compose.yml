@@ -19,6 +19,8 @@
       - DB_NAME=${DB_NAME}
     networks:
       - moneytale-network
+    depends_on:
+      - postgres
 
   postgres:
     image: postgres:17.2-bookworm
