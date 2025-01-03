@@ -8,6 +8,7 @@
 /************************ IMPORTS **************************************************/
 using Microsoft.EntityFrameworkCore;
 using moneytale_server.Data_Models;
+using moneytale_server.Enums;
 
 
 namespace moneytale_server
@@ -45,8 +46,22 @@ namespace moneytale_server
         {
             base.OnModelCreating(modelBuilder);
 
+            /************************ CONFIGURE USER DATA MODEL ********************************************/
+            // creates the Users table
             modelBuilder.Entity<UserDataModel>()
                 .ToTable("Users");
+
+            // configures UserRole to be stored as string instead of integer
+            modelBuilder.Entity<UserDataModel>()
+                .Property(u => u.UserRole)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<UserRole>(v));
+
+            /************************ CONFIGURE CATEGORY DATA MODEL ********************************************/
+            // creates the Categories table
+            modelBuilder.Entity<CategoryDataModel>()
+                .ToTable("Categories");
         }
     }
 }
