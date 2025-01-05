@@ -33,6 +33,15 @@ namespace moneytale_server.Repositories
         Task<IEnumerable<CategoryDataModel>> GetAllCategoriesAsync();
 
         /// <summary>
+        /// Asynchronously retrieves all categories belonging to the
+        /// specified user, as well as default categories.
+        /// </summary>
+        /// <param name="userId">The unique identifier of a user.</param>
+        /// <returns>A task that represents the asynchronous operation.
+        /// The task result contains a collection of categories.</returns>
+        Task<IEnumerable<CategoryDataModel>> GetUserCategoriesAsync(int userId);
+
+        /// <summary>
         /// Asynchronously adds a new category to the repository.
         /// </summary>
         /// <param name="category">The category to add.</param>
