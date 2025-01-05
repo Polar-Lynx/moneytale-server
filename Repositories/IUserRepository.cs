@@ -1,7 +1,7 @@
 ﻿/************************************************************************************
 *   File:           IUserRepository.cs
-*   Description:    Contains the IUserRepository interface class, which defines
-*                   the CRUD operations for the User entity.
+*   Description:    Contains the IUserRepository interface class, which defines the
+*                   CRUD operations for the User entity.
 ************************************************************************************/
 
 
@@ -24,6 +24,22 @@ namespace moneytale_server.Repositories
         /// <returns>A task that represents the asynchronous operation.
         /// The task result contains the user if found; otherwise, null.</returns>
         Task<UserDataModel?> GetUserByIdAsync(int userId);
+
+        /// <summary>
+        /// Asynchronously retrieves a user by their username.
+        /// </summary>
+        /// <param name="username">The username of the user.</param>
+        /// <returns>A task that represents the asynchronous operation.
+        /// The task result contains the user if found; otherwise, null.</returns>
+        Task<UserDataModel?> GetUserByUsernameAsync(string username);
+
+        /// <summary>
+        /// Asynchronously retrieves a user by their email address.
+        /// </summary>
+        /// <param name="email">The email address of the user.</param>
+        /// <returns>A task that represents the asynchronous operation.
+        /// The task result contains the user if found; otherwise, null.</returns>
+        Task<UserDataModel?> GetUserByEmailAsync(string email);
 
         /// <summary>
         /// Asynchronously retrieves all users.
