@@ -20,7 +20,13 @@ namespace moneytale_server
     {
         /************************ PROPERTIES ***********************************************/
         /// <summary>
-        /// Gets or sets the User table.
+        /// Gets or sets the Categories table.
+        /// This property represents a collection of entities that can be queried and saved.
+        /// </summary>
+        public DbSet<CategoryDataModel> Categories { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Users table.
         /// This property represents a collection of entities that can be queried and saved.
         /// </summary>
         public DbSet<UserDataModel> Users { get; set; }
