@@ -9,6 +9,7 @@
 /************************ IMPORTS **************************************************/
 using Microsoft.EntityFrameworkCore;
 using moneytale_server;
+using moneytale_server.Repositories;
 
 
 /************************ INITIALIZATION *******************************************/
@@ -42,6 +43,10 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ServerDbContext>(options =>
     options.UseNpgsql($"Host={connectionServer};Database={connectionDatabase};Username={connectionUserId};Password={connectionPassword}"));
 
+// adds database operation repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
 
 /************************ MIDDLEWARE ***********************************************/
 // builds the application pipeline using the configured builder
@@ -65,29 +70,47 @@ if (app.Environment.IsDevelopment())
 
 
 /************************ REQUESTS *************************************************/
-// sample data provided to simulate a weather forecast
-var summaries = new[]
+// maps the GET HTTP endpoint for the user's dashboard to the specified logic
+app.MapGet("/dashboard", async (string email, IUserRepository userRepository) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    try
+    {
+        // checks if the email is valid
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return Results.BadRequest("Invalid email address.");
+        }
+        else
+        {
+            try
+            {
+                // checks if it adheres to the basic format of an email address
+                var address = new System.Net.Mail.MailAddress(email);
 
-// maps the GET HTTP endpoint for the weather forecast to the specified logic
-app.MapGet("/weatherforecast", () =>
-{
-    // generates an array of WeatherForecast objects
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        // generates future dates, random temperatures in degrees Celcius, and random summaries
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
+                if (address.Address != email) {
+                    return Results.BadRequest("Invalid email address.");
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Invalid email");
+            }
+        }
 
-    return forecast;
+        // finds the user by email
+        var user = await userRepository.GetUserByEmailAsync(email);
+
+        // if found, returns the user's dashboard information; else, 404
+        return user == null ? Results.NotFound("User not found") : Results.Ok(user.Username);
+    }
+    catch (Exception ex)
+    {
+        // handles the error
+        Console.WriteLine($"Error: {ex.Message}");
+        return Results.Problem("An unexpected error occurred while processing your request.");
+    }
 })
-.WithName("GetWeatherForecast");
+.WithName("GetDashboard");
 
 
 /************************ MAIN ****************************************************/
@@ -128,12 +151,4 @@ static string GetRequiredEnvironmentVariable(string key)
     }
 
     return value;
-}
-
-
-// defines a record for representing weather forecasts
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    // a derived property that calculates the temperature in Fahrenheit
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
