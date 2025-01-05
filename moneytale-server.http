@@ -1,6 +1,11 @@
 @moneytale_server_HostAddress = http://localhost:8080
 
-GET {{moneytale_server_HostAddress}}/weatherforecast/
+GET {{moneytale_server_HostAddress}}/dashboard?email=admin@example.com
+Accept: application/json
+
+###
+
+GET {{moneytale_server_HostAddress}}/dashboard?email=john.doe@example.com
 Accept: application/json
 
 ###
